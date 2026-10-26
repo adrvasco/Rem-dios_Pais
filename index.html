@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F4F1EA">
+<title>Remédios</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231D4ED8'/%3E%3Cpath d='M21 43 43 21' stroke='%23fff' stroke-width='15' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F1EA; --card:#FFFFFF; --ink:#1B1F23; --ink2:#4E5663; --line:#E3DED3; --ponto:#B9B2A3;
+  --azul:#1D4ED8; --azul-esc:#1E3A8A; --azul-bg:#E8EEFC;
+  --verde:#146C34; --verde-bg:#E5F4EA; --verde-borda:#9FD3B1;
+  --ambar:#8A5100; --ambar-bg:#FFF3D3; --ambar-borda:#EFC164;
+  --verm:#B42318; --verm-bg:#FDEBE8; --verm-borda:#F0A59C;
+  --cinza-bg:#EEEBE4;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:19px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:18px 16px 56px}
+button{font:inherit;cursor:pointer}
+
+/* Cabeçalho */
+#topo h1{font-size:30px;line-height:1.15;margin:4px 0 4px}
+#topo .data{color:var(--ink2);font-size:19px}
+#topo .nota{margin-top:8px;font-size:16px;color:var(--ambar);background:var(--ambar-bg);border-radius:10px;padding:8px 12px;font-weight:700}
+.con{font-size:14px;font-weight:700;white-space:nowrap;margin-left:6px}
+.con.on{color:var(--verde)} .con.off{color:var(--verm)}
+
+/* Avisos */
+.banner{border-radius:14px;padding:12px 14px;font-weight:700;font-size:17px;margin:14px 0}
+.banner.offline{background:var(--ambar-bg);color:var(--ambar);border:2px solid var(--ambar-borda)}
+.banner.erro{background:var(--verm-bg);color:var(--verm);border:2px solid var(--verm-borda)}
+.carregando{color:var(--ink2);text-align:center;padding:40px 0;font-size:20px}
+.fatal{background:var(--card);border:2px solid var(--verm-borda);border-radius:16px;padding:20px;text-align:center;margin-top:24px}
+.fatal p{margin:0 0 14px}
+
+/* Turnos (tela da Luci) */
+.turno{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:16px;margin:16px 0}
+.turno.destaque{border-color:var(--azul);box-shadow:0 0 0 4px rgba(29,78,216,.14)}
+.turno-cab{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.turno-hora{font-size:36px;font-weight:700;line-height:1;min-width:62px}
+.turno-nome{font-size:21px;font-weight:700;flex:1;min-width:0}
+.chip{font-size:15px;font-weight:700;padding:6px 11px;border-radius:999px;white-space:nowrap}
+.chip.ok{background:var(--verde-bg);color:var(--verde)}
+.chip.agora{background:var(--ambar-bg);color:var(--ambar)}
+.chip.atrasado{background:var(--verm-bg);color:var(--verm)}
+.chip.espera{background:var(--cinza-bg);color:var(--ink2)}
+
+.pessoa{border-top:2px solid var(--line);padding-top:14px;margin-top:16px}
+.turno-cab + .pessoa{border-top:0;padding-top:0;margin-top:0}
+.pessoa-nome{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:24px;font-weight:700}
+.pessoa-nome small{font-size:16px;color:var(--ink2);font-weight:400;white-space:nowrap}
+.meds{margin:8px 0 14px;padding:0;list-style:none}
+.meds li{position:relative;padding:7px 0 7px 26px;font-size:19px;border-bottom:1px dashed #E9E4D9}
+.meds li:last-child{border-bottom:0}
+.meds li::before{content:"";position:absolute;left:6px;top:17px;width:10px;height:10px;border-radius:50%;background:var(--ponto)}
+.obs{display:inline-block;background:var(--ambar-bg);color:var(--ambar);font-weight:700;font-size:16px;padding:1px 8px;border-radius:7px;margin-left:4px}
+
+.btn-marcar{display:block;width:100%;min-height:66px;border:0;border-radius:16px;background:var(--azul);color:#fff;font-size:23px;font-weight:700;padding:10px 16px}
+.btn-marcar:active{background:var(--azul-esc)}
+.feito-box{display:flex;align-items:center;gap:10px;min-height:66px;background:var(--verde-bg);border:2px solid var(--verde-borda);color:var(--verde);border-radius:16px;padding:10px 8px 10px 14px;font-size:21px;font-weight:700}
+.feito-box .check{font-size:28px;line-height:1}
+.feito-box .txt{flex:1}
+.desfazer{background:none;border:0;color:var(--ink2);text-decoration:underline;font-size:16px;font-weight:400;padding:10px 8px}
+
+/* SOS */
+.sos{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:16px;margin:28px 0 16px}
+.sos h2{font-size:23px;margin:0}
+.sos .sub{color:var(--ink2);font-size:17px;margin:4px 0 12px}
+.contador{display:flex;align-items:baseline;gap:8px;margin:4px 0 10px}
+.contador .num{font-size:46px;font-weight:700;line-height:1}
+.contador .de{font-size:18px;color:var(--ink2)}
+.contador.limite .num{color:var(--verm)}
+.alerta{background:var(--verm-bg);border:2px solid var(--verm-borda);color:var(--verm);border-radius:12px;padding:10px 12px;font-weight:700;font-size:17px;margin:6px 0 12px}
+.btn-sos{display:block;width:100%;min-height:60px;border:2px solid var(--azul);border-radius:16px;background:#fff;color:var(--azul);font-size:21px;font-weight:700;padding:8px 16px}
+.btn-sos:active{background:var(--azul-bg)}
+.sos-lista{list-style:none;padding:0;margin:12px 0 0}
+.sos-lista li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:17px;padding:4px 0;border-top:1px solid var(--line)}
+.vazio{color:var(--ink2);font-size:16px}
+
+/* Tela de acompanhamento */
+body.acomp{font-size:16px}
+body.acomp #topo h1{font-size:26px}
+body.acomp #topo .data{font-size:16px}
+.painel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:14px 0}
+.painel h2{font-size:18px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.painel h2 small{font-size:13px;color:var(--ink2);font-weight:400}
+.linha-info{font-size:14px;color:var(--ink2);margin:8px 0 0}
+.grade{width:100%;border-collapse:separate;border-spacing:6px 6px;margin:-6px}
+.grade{width:calc(100% + 12px)}
+.grade thead th{font-size:14px;color:var(--ink2);text-align:center}
+.grade tbody th{text-align:left;font-size:15px;white-space:nowrap;width:26%}
+.grade tbody th small{display:block;font-weight:400;color:var(--ink2);font-size:12px}
+.cel{display:block;text-align:center;padding:10px 4px;border-radius:10px;font-weight:700;font-size:15px}
+.cel.ok{background:var(--verde-bg);color:var(--verde)}
+.cel.atrasado,.cel.falta{background:var(--verm-bg);color:var(--verm)}
+.cel.agora{background:var(--ambar-bg);color:var(--ambar)}
+.cel.espera{background:var(--cinza-bg);color:var(--ink2);font-weight:400}
+.cel.na{color:var(--ponto);font-weight:400}
+.contador-p{font-size:16px}
+.contador-p b{font-size:22px}
+.contador-p.limite b{color:var(--verm)}
+.lista-p{list-style:none;padding:0;margin:8px 0 0;font-size:14px;color:var(--ink2)}
+.lista-p li{padding:3px 0;border-top:1px solid var(--line)}
+.adesao{font-size:15px;margin:0 0 10px}
+.adesao b{font-size:20px}
+.tab-wrap{overflow-x:auto}
+.hist{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;font-variant-numeric:tabular-nums}
+.hist th,.hist td{padding:3px 2px;text-align:center}
+.hist thead th{color:var(--ink2);font-weight:700;font-size:12px}
+.hist thead tr:first-child th{font-size:13px;color:var(--ink)}
+.hist th.c-dia,.hist td.dia{width:72px;text-align:left;white-space:nowrap}
+.hist th.c-sos{width:34px}
+.hist td.dia small{color:var(--ink2);font-weight:400}
+.hist tr.dom td.dia{font-weight:700}
+.hist .h{display:block;border-radius:6px;padding:4px 0;min-height:24px}
+.hist .h.ok{background:var(--verde-bg);color:var(--verde)}
+.hist .h.falta,.hist .h.atrasado{background:var(--verm-bg);color:var(--verm);font-weight:700}
+.hist .h.agora{background:var(--ambar-bg);color:var(--ambar)}
+.hist .h.qtd{color:var(--azul);font-weight:700}
+.hist .sep{border-left:2px solid var(--line)}
+.legenda{font-size:12px;color:var(--ink2);margin-top:8px}
+details.painel summary{font-weight:700;cursor:pointer;font-size:16px}
+.lista-meds h3{font-size:15px;margin:14px 0 4px}
+.lista-meds ul{margin:0;padding-left:20px;font-size:14px}
+.btn-sec{border:1px solid var(--azul);background:#fff;color:var(--azul);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700}
+.link-luci{word-break:break-all;font-size:13px;color:var(--ink2);margin:6px 0 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header id="topo"></header>
+  <div id="avisos"></div>
+  <main id="conteudo"><p class="carregando">Carregando…</p></main>
+  <div id="estatico"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* ================== FIREBASE ================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDeDjblvRrghtivTREYbHKl0nySDMHRmkM",
+  authDomain: "remedios-pais.firebaseapp.com",
+  databaseURL: "https://remedios-pais-default-rtdb.firebaseio.com",
+  projectId: "remedios-pais",
+  storageBucket: "remedios-pais.firebasestorage.app",
+  messagingSenderId: "700034480569",
+  appId: "1:700034480569:web:4f09572fe6f03356cdde68"
+};
+
+/* ================== RECEITA (mudou a receita? edite só aqui) ================== */
+const TURNOS = [
+  { id: 'manha',  nome: 'Manhã',         h: 9 },
+  { id: 'almoco', nome: 'Após o almoço', h: 13 },
+  { id: 'noite',  nome: 'Noite',         h: 21 }
+];
+const PESSOAS = [
+  { id: 'osmar', nome: 'Osmar' },
+  { id: 'luci',  nome: 'Luci' }
+];
+const REMEDIOS = {
+  osmar: {
+    manha: [
+      { n: 'Linadib (Trayenta)' },
+      { n: 'Gaballon cog' },
+      { n: 'Furosemida 40 mg' },
+      { n: 'Hemifumarato de bisoprolol (Concor)' },
+      { n: 'Spasmex 30 mg' }
+    ],
+    almoco: [
+      { n: 'AAS' }
+    ],
+    noite: [
+      { n: 'Pregabalina 75 mg' },
+      { n: 'Atorvastatina cálcica 20 mg' },
+      { n: 'Olmesartana medoxomila + besilato de anlodipino' },
+      { n: 'Glifage XR 500 mg' },
+      { n: 'Cloridrato de donepezila 5 mg' },
+      { n: 'Levetiracetam 250 mg', obs: 'meio comprimido' },
+      { n: 'Dutasterida + cloridrato de tansulosina 0,5 mg + 0,4 mg' }
+    ]
+  },
+  luci: {
+    manha: [
+      { n: 'Artrolive' },
+      { n: 'Losartana' },
+      { n: 'Afetus 59 mg' },
+      { n: 'Vitamina D3 50.000 UI', obs: 'só aos domingos', domingo: true }
+    ],
+    noite: [
+      { n: 'Losartana' },
+      { n: 'Ezetimiba 10 mg' }
+    ]
+  }
+};
+const SOS = { pessoa: 'Luci', nome: 'Rivotril', dose: '3 gotas', max: 3, dias: 7 };
+const ATRASO_MIN = 30;   // minutos de tolerância antes de ficar "Atrasado"
+const VIRADA_H = 5;      // o dia dos remédios vira às 5h (marcação de madrugada conta para a noite anterior)
+const HIST_DIAS = 30;
+const RAIZ = 'remedios';
+
+/* ================== BASE ================== */
+const MODO = new URLSearchParams(location.search).has('acompanhar') ? 'acompanhar' : 'marcar';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const DIA_MS = 864e5;
+
+const SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const SEM_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+function chaveDe(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function dataDaChave(k) { const p = k.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+function somaDias(k, n) { const d = dataDaChave(k); d.setDate(d.getDate() + n); return chaveDe(d); }
+function diaRemedio(agora) { const d = new Date(agora.getTime()); if (d.getHours() < VIRADA_H) d.setDate(d.getDate() - 1); return chaveDe(d); }
+function horarioSlot(k, turno) { const d = dataDaChave(k); d.setHours(turno.h, 0, 0, 0); return d.getTime(); }
+function ehDomingo(k) { return dataDaChave(k).getDay() === 0; }
+function hhmm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function dataLonga(k) { const d = dataDaChave(k); return SEMANA[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]; }
+function dataCurta(k) { const d = dataDaChave(k); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1); }
+function quando(ts) {
+  const d = new Date(ts), k = chaveDe(d), hoje = chaveDe(new Date());
+  let dia;
+  if (k === hoje) dia = 'hoje';
+  else if (k === somaDias(hoje, -1)) dia = 'ontem';
+  else if (k === somaDias(hoje, 1)) dia = 'amanhã';
+  else dia = SEM_CURTA[d.getDay()] + ' ' + dataCurta(k);
+  return dia + ' às ' + hhmm(d);
+}
+
+const SLOTS = [];
+TURNOS.forEach(t => PESSOAS.forEach(p => {
+  if (REMEDIOS[p.id] && REMEDIOS[p.id][t.id]) SLOTS.push({ key: p.id + '_' + t.id, pessoa: p, turno: t });
+}));
+function medsDo(slot, k) {
+  return REMEDIOS[slot.pessoa.id][slot.turno.id].filter(m => !m.domingo || ehDomingo(k));
+}
+
+/* Situação de uma dose: ok | falta | futuro | espera | agora | atrasado */
+function statusSlot(k, slot, regs, agora, hoje) {
+  const r = regs && regs[slot.key];
+  if (r && typeof r === 'object') return { tipo: 'ok', hora: r.hora || '' };
+  if (k < hoje) return { tipo: 'falta' };
+  if (k > hoje) return { tipo: 'futuro' };
+  const h = horarioSlot(k, slot.turno), t = agora.getTime();
+  if (t < h) return { tipo: 'espera' };
+  if (t < h + ATRASO_MIN * 60e3) return { tipo: 'agora' };
+  return { tipo: 'atrasado' };
+}
+const PESO = { atrasado: 4, agora: 3, espera: 2, falta: 4, futuro: 1, ok: 0 };
+function agregado(sts) {
+  let pior = 'ok';
+  sts.forEach(s => { if (PESO[s.tipo] > PESO[pior]) pior = s.tipo; });
+  return pior;
+}
+
+/* ================== ESTADO ================== */
+const estado = {
+  hoje: diaRemedio(new Date()),
+  regsHoje: undefined,   // tela da Luci
+  dias: undefined,       // tela de acompanhamento
+  sos: undefined,
+  inicio: undefined,
+  conectado: null,
+  mostrarOffline: false,
+  cargaDemorada: false,
+  erro: null
+};
+let db = null;
+let subs = [];
+let jaRolou = false;
+let tOffline = null;
+
+/* ================== FIREBASE: CONEXÃO ================== */
+function iniciarFirebase() {
+  if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+    $('conteudo').innerHTML = '<div class="fatal"><p><b>Não foi possível abrir o app.</b></p><p>Confira se a internet está ligada e tente de novo.</p><button class="btn-marcar" data-acao="recarregar">Tentar de novo</button></div>';
+    return false;
+  }
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } catch (e) {
+    $('conteudo').innerHTML = '<div class="fatal"><p><b>Erro ao iniciar o banco de dados.</b></p><p>' + esc(e && e.message) + '</p><button class="btn-marcar" data-acao="recarregar">Tentar de novo</button></div>';
+    return false;
+  }
+  return true;
+}
+
+function erroDe(err) {
+  const msg = String((err && (err.code || err.message)) || err || '');
+  if (/permission/i.test(msg)) return 'O banco de dados recusou o acesso. Confira se as regras foram publicadas no Firebase (aba Regras).';
+  return 'Erro no banco de dados: ' + msg;
+}
+
+function assinar(ref, aoReceber) {
+  const cb = ref.on('value', snap => {
+    estado.erro = null;
+    aoReceber(snap.val());
+    render();
+  }, err => {
+    estado.erro = erroDe(err);
+    render();
+  });
+  subs.push(() => ref.off('value', cb));
+}
+
+function conectar() {
+  subs.forEach(f => { try { f(); } catch (e) { /* ignora */ } });
+  subs = [];
+  estado.hoje = diaRemedio(new Date());
+  const raiz = db.ref(RAIZ);
+  if (MODO === 'marcar') {
+    estado.regsHoje = undefined;
+    assinar(raiz.child('dias/' + estado.hoje), v => { estado.regsHoje = v || {}; });
+  } else {
+    estado.dias = undefined;
+    const ini = somaDias(estado.hoje, -(HIST_DIAS - 1));
+    assinar(raiz.child('dias').orderByKey().startAt(ini), v => { estado.dias = v || {}; });
+  }
+  assinar(raiz.child('sos'), v => { estado.sos = v || {}; });
+  assinar(raiz.child('inicio'), v => { estado.inicio = v || null; });
+}
+
+function verificarDia() {
+  if (!db) return false;
+  if (diaRemedio(new Date()) !== estado.hoje) { conectar(); render(); return true; }
+  return false;
+}
+
+function erroGravacao(e) {
+  estado.erro = erroDe(e);
+  render();
+  alert('Não foi possível salvar.\n\n' + erroDe(e));
+}
+
+/* ================== AÇÕES ================== */
+function rotuloSlot(key) {
+  const s = SLOTS.find(x => x.key === key);
+  return s ? s.pessoa.nome + ' — ' + s.turno.nome + ' (' + s.turno.h + 'h)' : key;
+}
+
+function marcar(key) {
+  if (!SLOTS.some(s => s.key === key)) return;
+  if (verificarDia()) return; // o dia virou; a tela foi atualizada antes de marcar
+  const agora = new Date();
+  db.ref(RAIZ + '/dias/' + estado.hoje + '/' + key)
+    .set({ ts: agora.getTime(), hora: hhmm(agora) })
+    .catch(erroGravacao);
+}
+
+function desmarcar(key) {
+  if (!SLOTS.some(s => s.key === key)) return;
+  if (!confirm('Desmarcar "' + rotuloSlot(key) + '"?\n\nUse só se marcou por engano.')) return;
+  db.ref(RAIZ + '/dias/' + estado.hoje + '/' + key).remove().catch(erroGravacao);
+}
+
+function usosSos() {
+  return Object.keys(estado.sos || {})
+    .map(id => Object.assign({ id: id }, estado.sos[id]))
+    .filter(u => typeof u.ts === 'number')
+    .sort((a, b) => b.ts - a.ts);
+}
+function usosRecentes(agora) {
+  const t = agora.getTime();
+  return usosSos().filter(u => t - u.ts < SOS.dias * DIA_MS);
+}
+function liberaEm(recentes) {
+  return recentes.length >= SOS.max ? recentes[SOS.max - 1].ts + SOS.dias * DIA_MS : null;
+}
+
+function registrarSos() {
+  const agora = new Date();
+  const rec = usosRecentes(agora);
+  let msg = 'Registrar ' + SOS.nome + ' (' + SOS.dose + ') da ' + SOS.pessoa + ' agora, às ' + hhmm(agora) + '?';
+  if (rec.length >= SOS.max) {
+    msg = 'ATENÇÃO: a ' + SOS.pessoa + ' já tomou ' + SOS.nome + ' ' + rec.length + ' vezes nos últimos ' + SOS.dias +
+      ' dias. O limite da receita é ' + SOS.max + '.\n\nSó registre se ela realmente tomou. Registrar mesmo assim?';
+  }
+  if (!confirm(msg)) return;
+  db.ref(RAIZ + '/sos').push({ ts: agora.getTime(), hora: hhmm(agora), dia: diaRemedio(agora) }).catch(erroGravacao);
+}
+
+function removerSos(id) {
+  const u = (estado.sos || {})[id];
+  if (!u) return;
+  if (!confirm('Remover o registro de ' + SOS.nome + ' de ' + quando(u.ts) + '?\n\nUse só se registrou por engano.')) return;
+  db.ref(RAIZ + '/sos/' + id).remove().catch(erroGravacao);
+}
+
+function copiarLink(btn) {
+  const url = location.origin + location.pathname;
+  const ok = () => { btn.textContent = 'Copiado ✓'; setTimeout(() => { btn.textContent = 'Copiar link'; }, 2000); };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(ok, () => prompt('Copie o link:', url));
+  } else {
+    prompt('Copie o link:', url);
+  }
+}
+
+/* ================== RENDER ================== */
+function render() {
+  if (!db) return;
+  renderTopo();
+  renderAvisos();
+  if (MODO === 'marcar') renderMarcar(); else renderAcompanhar();
+}
+
+function renderTopo() {
+  const agora = new Date();
+  const madrugada = agora.getHours() < VIRADA_H;
+  let h;
+  if (MODO === 'marcar') {
+    h = '<h1>Remédios de hoje</h1><div class="data">' + dataLonga(estado.hoje) + '</div>';
+    if (madrugada) h += '<div class="nota">Ainda são os remédios de ontem. O dia vira às 5h da manhã.</div>';
+  } else {
+    const on = estado.conectado === true;
+    h = '<h1>Acompanhamento</h1><div class="data">' + dataLonga(estado.hoje) +
+      (estado.conectado === null ? '' : ' <span class="con ' + (on ? 'on' : 'off') + '">● ' + (on ? 'Ao vivo' : 'Sem conexão') + '</span>') + '</div>';
+  }
+  if ($('topo').innerHTML !== h) $('topo').innerHTML = h;
+}
+
+function renderAvisos() {
+  let h = '';
+  if (estado.erro) h += '<div class="banner erro">' + esc(estado.erro) + '</div>';
+  if (estado.mostrarOffline) {
+    h += '<div class="banner offline">' + (MODO === 'marcar'
+      ? 'Sem internet agora. O que for marcado será enviado quando a conexão voltar.'
+      : 'Sem conexão. Os dados podem estar desatualizados.') + '</div>';
+  }
+  if ($('avisos').innerHTML !== h) $('avisos').innerHTML = h;
+}
+
+function telaCarregando() {
+  return '<p class="carregando">' + (estado.cargaDemorada
+    ? 'Ainda carregando…<br><small>Confira se o celular está com internet.</small>'
+    : 'Carregando…') + '</p>';
+}
+
+function chip(tipo) {
+  const txt = { ok: 'Feito', agora: 'Hora de tomar', atrasado: 'Atrasado', espera: 'Mais tarde', falta: 'Não marcado', futuro: '' }[tipo];
+  return txt ? '<span class="chip ' + tipo + '">' + txt + '</span>' : '';
+}
+
+function itensMeds(lista) {
+  return lista.map(m => '<li>' + esc(m.n) + (m.obs ? ' <span class="obs">' + esc(m.obs) + '</span>' : '') + '</li>').join('');
+}
+
+function turnoEmDestaque(k, regs, agora) {
+  let prox = null;
+  for (const t of TURNOS) {
+    const sts = SLOTS.filter(s => s.turno.id === t.id).map(s => statusSlot(k, s, regs, agora, k));
+    const a = agregado(sts);
+    if (a === 'atrasado' || a === 'agora') return t.id;
+    if (a === 'espera' && !prox) prox = t.id;
+  }
+  return prox;
+}
+
+function renderMarcar() {
+  const main = $('conteudo');
+  const k = estado.hoje, regs = estado.regsHoje, agora = new Date();
+  if (regs === undefined) {
+    const h = estado.erro ? '' : telaCarregando();
+    if (main.innerHTML !== h) main.innerHTML = h;
+    return;
+  }
+  const destaque = turnoEmDestaque(k, regs, agora);
+  let h = '';
+  TURNOS.forEach(t => {
+    const slots = SLOTS.filter(s => s.turno.id === t.id);
+    if (!slots.length) return;
+    const sts = slots.map(s => statusSlot(k, s, regs, agora, k));
+    h += '<section class="turno' + (t.id === destaque ? ' destaque' : '') + '" id="turno-' + t.id + '">' +
+      '<div class="turno-cab"><div class="turno-hora">' + t.h + 'h</div><div class="turno-nome">' + esc(t.nome) + '</div>' + chip(agregado(sts)) + '</div>';
+    slots.forEach((s, i) => {
+      const st = sts[i], meds = medsDo(s, k);
+      h += '<div class="pessoa' + (st.tipo === 'ok' ? ' feito' : '') + '">' +
+        '<div class="pessoa-nome">' + esc(s.pessoa.nome) + '<small>' + meds.length + (meds.length === 1 ? ' remédio' : ' remédios') + '</small></div>' +
+        '<ul class="meds">' + itensMeds(meds) + '</ul>';
+      if (st.tipo === 'ok') {
+        h += '<div class="feito-box"><span class="check">✓</span><span class="txt">Tomou às ' + esc(st.hora) + '</span>' +
+          '<button class="desfazer" data-acao="desmarcar" data-slot="' + s.key + '">desfazer</button></div>';
+      } else {
+        h += '<button class="btn-marcar" data-acao="marcar" data-slot="' + s.key + '">' + esc(s.pessoa.nome) + ' tomou</button>';
+      }
+      h += '</div>';
+    });
+    h += '</section>';
+  });
+  h += cartaoSos(agora);
+  if (main.innerHTML !== h) main.innerHTML = h;
+
+  if (!jaRolou) {
+    jaRolou = true;
+    if (destaque && destaque !== TURNOS[0].id) {
+      const el = $('turno-' + destaque);
+      if (el) el.scrollIntoView({ block: 'start' });
+    }
+  }
+}
+
+function cartaoSos(agora) {
+  let h = '<section class="sos" id="sos"><h2>' + esc(SOS.nome) + ' — ' + esc(SOS.pessoa) + '</h2>' +
+    '<div class="sub">Só se precisar · ' + esc(SOS.dose) + ' · no máximo ' + SOS.max + ' vezes em ' + SOS.dias + ' dias</div>';
+  if (estado.sos === undefined) return h + '<p class="vazio">Carregando…</p></section>';
+  const rec = usosRecentes(agora);
+  const lim = rec.length >= SOS.max;
+  h += '<div class="contador' + (lim ? ' limite' : '') + '"><span class="num">' + rec.length + '</span><span class="de">de ' + SOS.max + ' nos últimos ' + SOS.dias + ' dias</span></div>';
+  if (lim) h += '<div class="alerta">Limite atingido. Libera de novo ' + quando(liberaEm(rec)) + '.</div>';
+  h += '<button class="btn-sos" data-acao="sos">Registrar ' + esc(SOS.nome) + ' agora</button>';
+  if (rec.length) {
+    h += '<ul class="sos-lista">' + rec.map(u => '<li><span>' + esc(quando(u.ts)) + '</span><button class="desfazer" data-acao="sos-remover" data-id="' + esc(u.id) + '">remover</button></li>').join('') + '</ul>';
+  }
+  return h + '</section>';
+}
+
+/* ---------- Tela de acompanhamento ---------- */
+function celulaHoje(st) {
+  switch (st.tipo) {
+    case 'ok': return '<span class="cel ok">✓ ' + esc(st.hora) + '</span>';
+    case 'agora': return '<span class="cel agora">Na hora</span>';
+    case 'atrasado': return '<span class="cel atrasado">Atrasado</span>';
+    case 'espera': return '<span class="cel espera">Mais tarde</span>';
+    case 'falta': return '<span class="cel falta">Não marcado</span>';
+    default: return '<span class="cel na">—</span>';
+  }
+}
+
+function celulaHist(st) {
+  switch (st.tipo) {
+    case 'ok': return '<span class="h ok">' + esc(st.hora) + '</span>';
+    case 'falta': case 'atrasado': return '<span class="h falta">✗</span>';
+    case 'agora': return '<span class="h agora">…</span>';
+    default: return '<span class="h"></span>';
+  }
+}
+
+function ultimaAtividade() {
+  let max = 0;
+  Object.keys(estado.dias || {}).forEach(k => {
+    const d = estado.dias[k] || {};
+    Object.keys(d).forEach(s => { if (d[s] && typeof d[s].ts === 'number' && d[s].ts > max) max = d[s].ts; });
+  });
+  usosSos().forEach(u => { if (u.ts > max) max = u.ts; });
+  return max;
+}
+
+function renderAcompanhar() {
+  const main = $('conteudo');
+  if (estado.dias === undefined || estado.sos === undefined || estado.inicio === undefined) {
+    const h = estado.erro ? '' : telaCarregando();
+    if (main.innerHTML !== h) main.innerHTML = h;
+    return;
+  }
+  const agora = new Date(), hoje = estado.hoje, dias = estado.dias;
+  let h = '';
+
+  // Hoje
+  h += '<section class="painel"><h2>Hoje <small>' + dataCurta(hoje) + ' · atrasa após ' + ATRASO_MIN + ' min</small></h2>' +
+    '<table class="grade"><thead><tr><th></th>' + PESSOAS.map(p => '<th>' + esc(p.nome) + '</th>').join('') + '</tr></thead><tbody>';
+  TURNOS.forEach(t => {
+    h += '<tr><th>' + t.h + 'h<small>' + esc(t.nome) + '</small></th>';
+    PESSOAS.forEach(p => {
+      const s = SLOTS.find(x => x.turno.id === t.id && x.pessoa.id === p.id);
+      h += '<td>' + (s ? celulaHoje(statusSlot(hoje, s, dias[hoje], agora, hoje)) : '<span class="cel na">—</span>') + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  const ult = ultimaAtividade();
+  h += '<p class="linha-info">' + (ult ? 'Última marcação: ' + esc(quando(ult)) : 'Nenhuma marcação ainda.') + '</p></section>';
+
+  // SOS
+  const rec = usosRecentes(agora), lim = rec.length >= SOS.max;
+  h += '<section class="painel"><h2>' + esc(SOS.nome) + ' — ' + esc(SOS.pessoa) + ' <small>máx. ' + SOS.max + ' em ' + SOS.dias + ' dias</small></h2>' +
+    '<div class="contador-p' + (lim ? ' limite' : '') + '"><b>' + rec.length + '</b> de ' + SOS.max + ' nos últimos ' + SOS.dias + ' dias' +
+    (lim ? ' · libera ' + esc(quando(liberaEm(rec))) : '') + '</div>';
+  if (rec.length) h += '<ul class="lista-p">' + rec.map(u => '<li>' + esc(quando(u.ts)) + '</li>').join('') + '</ul>';
+  h += '</section>';
+
+  // Histórico
+  let inicio = estado.inicio;
+  if (!inicio) { const ks = Object.keys(dias).sort(); inicio = ks.length ? ks[0] : null; }
+  h += '<section class="painel"><h2>Últimos ' + HIST_DIAS + ' dias</h2>';
+  if (!inicio) {
+    h += '<p class="vazio">O histórico começa quando a Luci abrir o app no celular dela.</p></section>';
+  } else {
+    const limite = somaDias(hoje, -(HIST_DIAS - 1));
+    const desde = inicio > limite ? inicio : limite;
+    const linhas = [];
+    for (let k = hoje; k >= desde; k = somaDias(k, -1)) linhas.push(k);
+    const sosPorDia = {};
+    usosSos().forEach(u => { if (u.dia) sosPorDia[u.dia] = (sosPorDia[u.dia] || 0) + 1; });
+
+    const cont = {}; PESSOAS.forEach(p => { cont[p.id] = { f: 0, d: 0 }; });
+    let corpo = '';
+    linhas.forEach(k => {
+      const regs = dias[k];
+      const dObj = dataDaChave(k);
+      corpo += '<tr' + (dObj.getDay() === 0 ? ' class="dom"' : '') + '><td class="dia">' + dataCurta(k) + ' <small>' + SEM_CURTA[dObj.getDay()] + '</small></td>';
+      PESSOAS.forEach((p, pi) => {
+        SLOTS.filter(s => s.pessoa.id === p.id).forEach((s, si) => {
+          const st = statusSlot(k, s, regs, agora, hoje);
+          if (st.tipo === 'ok') { cont[p.id].f++; cont[p.id].d++; }
+          else if (st.tipo === 'falta' || st.tipo === 'atrasado') cont[p.id].d++;
+          corpo += '<td' + (pi > 0 && si === 0 ? ' class="sep"' : '') + '>' + celulaHist(st) + '</td>';
+        });
+      });
+      corpo += '<td class="sep">' + (sosPorDia[k] ? '<span class="h qtd">' + sosPorDia[k] + '</span>' : '') + '</td></tr>';
+    });
+
+    let tf = 0, td = 0;
+    const porPessoa = PESSOAS.map(p => {
+      tf += cont[p.id].f; td += cont[p.id].d;
+      return esc(p.nome) + ' ' + (cont[p.id].d ? Math.round(cont[p.id].f * 100 / cont[p.id].d) + '%' : '—');
+    }).join(' · ');
+    h += '<p class="adesao">Doses marcadas: <b>' + (td ? Math.round(tf * 100 / td) + '%' : '—') + '</b> (' + tf + ' de ' + td + ')<br><small>' + porPessoa + '</small></p>';
+
+    let cab1 = '<tr><th class="c-dia" rowspan="2">Dia</th>', cab2 = '<tr>';
+    PESSOAS.forEach((p, pi) => {
+      const sl = SLOTS.filter(s => s.pessoa.id === p.id);
+      cab1 += '<th colspan="' + sl.length + '"' + (pi > 0 ? ' class="sep"' : '') + '>' + esc(p.nome) + '</th>';
+      sl.forEach((s, si) => { cab2 += '<th' + (pi > 0 && si === 0 ? ' class="sep"' : '') + '>' + s.turno.h + 'h</th>'; });
+    });
+    cab1 += '<th class="c-sos sep" rowspan="2">SOS</th></tr>';
+    cab2 += '</tr>';
+    h += '<div class="tab-wrap"><table class="hist"><thead>' + cab1 + cab2 + '</thead><tbody>' + corpo + '</tbody></table></div>' +
+      '<p class="legenda">Horário = marcou · ✗ = não marcado · SOS = vezes que tomou ' + esc(SOS.nome) + ' · domingo em negrito (dia da D3)</p></section>';
+  }
+  if (main.innerHTML !== h) main.innerHTML = h;
+}
+
+function renderEstaticoAcompanhar() {
+  let h = '<details class="painel lista-meds"><summary>Lista de remédios</summary>';
+  TURNOS.forEach(t => {
+    SLOTS.filter(s => s.turno.id === t.id).forEach(s => {
+      h += '<h3>' + esc(s.pessoa.nome) + ' · ' + t.h + 'h (' + esc(t.nome) + ')</h3><ul>' +
+        REMEDIOS[s.pessoa.id][t.id].map(m => '<li>' + esc(m.n) + (m.obs ? ' — <b>' + esc(m.obs) + '</b>' : '') + '</li>').join('') + '</ul>';
+    });
+  });
+  h += '<h3>' + esc(SOS.pessoa) + ' · se precisar</h3><ul><li>' + esc(SOS.nome) + ' ' + esc(SOS.dose) + ' — <b>no máximo ' + SOS.max + ' vezes em ' + SOS.dias + ' dias</b></li></ul></details>';
+  h += '<section class="painel"><h2>Link do celular da Luci</h2><div class="link-luci">' + esc(location.origin + location.pathname) + '</div>' +
+    '<button class="btn-sec" data-acao="copiar">Copiar link</button></section>';
+  $('estatico').innerHTML = h;
+}
+
+/* ================== EVENTOS ================== */
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-acao]');
+  if (!b) return;
+  const a = b.dataset.acao;
+  if (a === 'recarregar') { location.reload(); return; }
+  if (!db) return;
+  if (a === 'marcar') marcar(b.dataset.slot);
+  else if (a === 'desmarcar') desmarcar(b.dataset.slot);
+  else if (a === 'sos') registrarSos();
+  else if (a === 'sos-remover') removerSos(b.dataset.id);
+  else if (a === 'copiar') copiarLink(b);
+});
+
+// Android congela a sincronização com o app em segundo plano: ao voltar, força reconexão.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !db) return;
+  try { db.goOffline(); db.goOnline(); } catch (e) { /* ignora */ }
+  verificarDia();
+  render();
+});
+
+/* ================== INÍCIO ================== */
+if (MODO === 'acompanhar') document.body.classList.add('acomp');
+if (iniciarFirebase()) {
+  db.ref('.info/connected').on('value', snap => {
+    estado.conectado = snap.val() === true;
+    clearTimeout(tOffline);
+    if (estado.conectado) {
+      estado.mostrarOffline = false;
+    } else {
+      tOffline = setTimeout(() => { if (estado.conectado === false) { estado.mostrarOffline = true; render(); } }, 4000);
+    }
+    render();
+  });
+  conectar();
+  if (MODO === 'marcar') {
+    // marca o primeiro dia de uso (o histórico começa daqui)
+    db.ref(RAIZ + '/inicio').transaction(cur => cur || estado.hoje).catch(e => { estado.erro = erroDe(e); render(); });
+  } else {
+    renderEstaticoAcompanhar();
+  }
+  setTimeout(() => { estado.cargaDemorada = true; render(); }, 6000);
+  setInterval(() => { verificarDia(); render(); }, 30000);
+  render();
+}
+})();
+</script>
+</body>
+</html>
